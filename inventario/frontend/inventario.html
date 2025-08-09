@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <div class="logo">
+                <i class="fas fa-boxes"></i>
+                <span>Inventario</span>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a href="#" class="active" data-section="productos">
+                    <i class="fas fa-box"></i>
+                    <span>Productos</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-section="movimientos">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Movimientos</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" data-section="historico">
+                    <i class="fas fa-history"></i>
+                    <span>Histórico</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Contenido Principal -->
+    <div class="main-content">
+        <!-- Barra Superior -->
+        <div class="topbar">
+            <div class="topbar-title">
+                <span id="section-title">Gestión de Productos</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">A</div>
+                <div>
+                    <h4 id="username-display">Usuario Admin</h4>
+                    <p id="user-role">Administrador</p>
+                </div>
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+        
+        <!-- Sección de Productos - SOLO ESTA SECCIÓN VISIBLE INICIALMENTE -->
+        <section id="productos-section" class="content-section active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Productos</h2>
+                    <button class="btn btn-primary" id="nuevo-producto-btn">
+                        <i class="fas fa-plus"></i> Nuevo Producto
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-container">
+                        <!-- TABLA SIMPLIFICADA - SIN ENCABEZADOS DUPLICADOS -->
+                        <div id="productos-list">
+                            <!-- Los productos se cargarán dinámicamente aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- OTRAS SECCIONES OCULTAS INICIALMENTE -->
+        <section id="movimientos-section" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Registro de Movimientos</h2>
+                </div>
+                <div class="card-body">
+                    <form id="movimiento-form">
+                        <div class="form-group">
+                            <label for="movimiento-producto">Producto</label>
+                            <select id="movimiento-producto" class="form-control" required>
+                                <option value="">Seleccione un producto</option>
+                                <!-- Las opciones se cargarán dinámicamente -->
+                            </select>
+                            <div id="stock-info" class="stock-info"></div> <!-- Añadido para mostrar stock -->
+                        </div>
+                        <div class="form-group">
+                            <label for="movimiento-tipo">Tipo</label>
+                            <select id="movimiento-tipo" class="form-control" required>
+                                <option value="entrada">Entrada</option>
+                                <option value="salida">Salida</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="movimiento-cantidad">Cantidad</label>
+                            <input type="number" id="movimiento-cantidad" class="form-control" min="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            Registrar Movimiento
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        
+        <section id="historico-section" class="content-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Historial de Movimientos</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="filter-producto">Filtrar por Producto:</label>
+                        <select id="filter-producto" class="form-control">
+                            <option value="">Todos los productos</option>
+                            <!-- Las opciones se cargarán dinámicamente -->
+                        </select>
+                    </div>
+                    <div class="table-container" style="margin-top: 20px;">
+                        <!-- TABLA SIMPLIFICADA - SIN ENCABEZADOS DUPLICADOS -->
+                        <div id="historico-list">
+                            <!-- Los movimientos históricos se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Modal para Nuevo Producto -->
+    <div id="producto-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Producto</h2>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="producto-form">
+                    <div class="form-group">
+                        <label for="producto-nombre">Nombre</label>
+                        <input type="text" id="producto-nombre" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="producto-stock">Stock Inicial</label>
+                        <input type="number" id="producto-stock" class="form-control" min="0" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Editar Producto -->
+    <div id="edit-producto-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Producto</h2>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-producto-form">
+                    <input type="hidden" id="edit-producto-id">
+                    <div class="form-group">
+                        <label for="edit-producto-nombre">Nombre</label>
+                        <input type="text" id="edit-producto-nombre" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-producto-stock">Stock Inicial</label>
+                        <input type="number" id="edit-producto-stock" class="form-control" min="0" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Actualizar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para Historial -->
+    <div id="historial-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Historial de Movimientos</h2>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Producto: <strong id="historial-producto-nombre"></strong></p>
+                <div id="historial-content"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/producto.js"></script>
+    <script src="js/movimiento.js"></script>
+    <script src="js/historial.js"></script>
+    <script>
+    // Al cargar la página: mostrar solo la sección activa
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ocultar todas las secciones
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.style.display = 'none';
+        });
+        
+        // Mostrar solo la sección activa
+        document.querySelector('.content-section.active').style.display = 'block';
+        
+        // Cargar datos del usuario
+        const usuario = JSON.parse(localStorage.getItem('usuario'));
+        if (usuario) {
+            document.getElementById('username-display').textContent = usuario.nombre;
+            document.getElementById('user-role').textContent = usuario.rol;
+            document.getElementById('user-avatar').textContent = usuario.nombre.charAt(0);
+            
+            // Cargar productos si es necesario
+            if (typeof cargarProductos === 'function') {
+                cargarProductos();
+            }
+        } else {
+            // Si no hay usuario, redirigir al login
+            window.location.href = 'index.html';
+        }
+    });
+
+    // Navegación entre secciones
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Actualizar enlace activo
+            document.querySelectorAll('.nav-links a').forEach(a => {
+                a.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Actualizar título de la sección
+            const section = this.getAttribute('data-section');
+            let title = 'Productos';
+            
+            if (section === 'movimientos') title = 'Movimientos';
+            else if (section === 'historico') title = 'Histórico';
+            
+            document.getElementById('section-title').textContent = title;
+            
+            // Ocultar todas las secciones
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Mostrar solo la sección seleccionada
+            const sectionElement = document.getElementById(section + '-section');
+            if (sectionElement) {
+                sectionElement.style.display = 'block';
+            }
+            
+            // Recargar datos si es necesario
+            if (section === 'productos' && typeof window.cargarProductos === 'function') {
+                cargarProductos();
+            }
+            if (section === 'movimientos' && typeof window.cargarProductosEnSelect === 'function') {
+                cargarProductosEnSelect();
+            }
+            if (section === 'historico' && typeof window.cargarHistorico === 'function') {
+                cargarHistorico();
+            }
+        });
+    });
+    
+    // Cerrar sesión
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('usuario');
+        window.location.href = 'index.html';
+    });
+    
+    // Cerrar modales
+    document.querySelectorAll('.close').forEach(button => {
+        button.addEventListener('click', function() {
+            this.closest('.modal').style.display = 'none';
+        });
+    });
+    
+    // Cerrar modales al hacer clic fuera
+    window.addEventListener('click', function(e) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+</script>
+</body>
+</html>
