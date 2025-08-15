@@ -31,7 +31,9 @@ const usuarioSchema = new mongoose.Schema({
 // Hash de contraseña 
 usuarioSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  
+  if (this.password.startsWith('$2a$') || this.password.startsWith('$2b$')) {
+    return next();
+  }
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -39,7 +41,8 @@ usuarioSchema.pre('save', async function(next) {
   } catch (error) {
     next(error);
   }
-});
+}
+);
 
 usuarioSchema.methods.compararPassword = async function(password) {
   return await bcrypt.compare(password, this.password);
