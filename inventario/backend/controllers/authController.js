@@ -12,7 +12,7 @@ exports.crearUsuarioAdmin = async () => {
             const admin = new Usuario({
                 nombre: 'Administrador',
                 usuario: 'admin',
-                password: hashedPassword,
+                password: 'admin123',
                 rol: 'admin'
             });
             
@@ -32,8 +32,10 @@ exports.iniciarSesion = async (req, res) => {
         if (!usuarioEncontrado) {
             return res.status(400).json({ error: 'Credenciales inválidas' });
         }
-
+        
         const esPasswordValido = await bcrypt.compare(password, usuarioEncontrado.password);
+        console.log('Contraseña recibida:', password); // Debe ser 'admin123'
+        console.log('Hash almacenado:', usuarioEncontrado.password);
         if (!esPasswordValido) {
             return res.status(400).json({ error: 'Credenciales inválidas' });
         }
