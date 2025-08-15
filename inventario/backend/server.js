@@ -45,24 +45,43 @@ app.use(cookieParser());
 
 // Configuración de CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // Asegúrate que coincide con tu frontend
+  origin: 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+  exposedHeaders: ['Authorization', 'x-auth-token']
 }));
 
-// Conexión a MongoDB
+// =============================================
+// CONEXIÓN A MONGODB E INICIALIZACIÓN
+// =============================================
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('\nConectado a MongoDB');
-    createAdminIfNotExists();
+    return createAdminIfNotExists();
+  })
+  .then(() => repararUsuarios())
+  .then(() => {
+    // Iniciar servidor DESPUÉS de inicializar DB
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`
+      Servidor funcionando en http://localhost:${PORT}
+      Modo: ${process.env.NODE_ENV || 'development'}
+      Auth:        http://localhost:${PORT}/api/auth
+      Productos:   http://localhost:${PORT}/api/productos
+      Movimientos: http://localhost:${PORT}/api/movimientos
+      `);
+    });
   })
   .catch(err => {
-    console.error('Error de conexión a MongoDB:', err);
+    console.error('Error durante la inicialización:', err);
     process.exit(1);
   });
 
-// CORRECCIÓN PRINCIPAL: Crear usuario administrador correctamente
+// =============================================
+// FUNCIÓN PARA CREAR ADMINISTRADOR
+// =============================================
 async function createAdminIfNotExists() {
   try {
     const Usuario = require('./models/Usuario');
@@ -71,14 +90,11 @@ async function createAdminIfNotExists() {
     const adminExiste = await Usuario.findOne({ usuario: 'admin' });
     
     if (!adminExiste) {
-      // Hashear la contraseña
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      
       // Crear nuevo usuario admin
       await Usuario.create({
         nombre: 'Administrador',
         usuario: 'admin',
-        password: hashedPassword,
+        password: 'admin123',
         rol: 'admin'
       });
       
@@ -91,8 +107,39 @@ async function createAdminIfNotExists() {
     }
   } catch (error) {
     console.error('Error al crear usuario administrador:', error);
+    throw error; // Propaga el error para ser capturado por el catch global
   }
 }
+
+// =============================================
+// FUNCIÓN PARA REPARAR USUARIO ADMIN
+// =============================================
+async function repararUsuarios() {
+  try {
+    const Usuario = require('./models/Usuario');
+    const usuarios = await Usuario.find();
+    
+    for (const usuario of usuarios) {
+      if (usuario.usuario === 'admin') {
+        // Restablecer contraseña temporal
+        usuario.password = 'admin123';
+        
+        // Guardar activará middleware (hash correcto)
+        await usuario.save();
+        
+        console.log(`\nUsuario ${usuario.usuario} reparado. Contraseña temporal: admin123`);
+        console.log('==============================================================');
+      }
+    }
+  } catch (error) {
+    console.error('Error al reparar usuarios:', error);
+    throw error; // Propaga el error
+  }
+}
+
+// =============================================
+// CONFIGURACIÓN DE RUTAS
+// =============================================
 
 // Rutas estáticas
 const frontendDir = path.join(__dirname, '..', 'frontend');
@@ -130,7 +177,9 @@ app.get('*', (req, res) => {
   res.sendFile(indexPath);
 });
 
-// Manejador global de errores
+// =============================================
+// MANEJADOR GLOBAL DE ERRORES
+// =============================================
 app.use((err, req, res, next) => {
   console.error('Error global:', err.stack);
   
@@ -144,16 +193,4 @@ app.use((err, req, res, next) => {
   }
   
   res.status(500).send('<h1>Error interno del servidor</h1>');
-});
-
-// Iniciar servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`
-  Servidor funcionando en http://localhost:${PORT}
-  Modo: ${process.env.NODE_ENV || 'development'}
-  Auth:        http://localhost:${PORT}/api/auth
-  Productos:   http://localhost:${PORT}/api/productos
-  Movimientos: http://localhost:${PORT}/api/movimientos
-  `);
 });
