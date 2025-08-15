@@ -3,13 +3,25 @@ const Usuario = require('../models/Usuario');
 
 module.exports = async function(req, res, next) {
     // Obtener token de diferentes fuentes
-     let token = (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null) || 
-                req.cookies.token || 
-                req.header('x-auth-token');
-    // No hay token
+    let token = null;
+    
+    // 1. Verificar Authorization header (Bearer token)
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+    // 2. Verificar header personalizado x-auth-token
+    else if (req.headers['x-auth-token']) {
+        token = req.headers['x-auth-token'];
+    }
+    // 3. Verificar cookies (solo si tienes cookie-parser configurado)
+    else if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
+
+    // No se encontró token en ninguna fuente
     if (!token) {
         return res.status(401).json({ 
-            error: 'Acceso denegado',
+            error: 'Acceso denegado',                                                                                                                                  
             message: 'Token de autenticación requerido'
         });
     }
@@ -38,6 +50,11 @@ module.exports = async function(req, res, next) {
             rol: usuario.rol
         };
         
+        // Registrar para depuración (opcional)
+        // En authMiddleware.js
+if (process.env.NODE_ENV === 'development') {
+  console.log(`[${new Date().toLocaleTimeString()}] Autenticado: ${usuario.usuario} (${req.method} ${req.path})`);
+}
         next();
     } catch (error) {
         // Manejar diferentes tipos de errores
